@@ -203,7 +203,7 @@ export default function DashboardPage() {
                 </h3>
                 
                 {job.failed_reason && (
-                  <p className="text-xs text-red-400 mt-2 bg-red-950/40 border border-red-900/30 rounded p-2 font-mono break-all">
+                  <p className="text-xs text-red-400 mt-2 bg-red-950/40 border border-red-900/30 rounded p-2 font-mono break-words">
                     {job.failed_reason}
                   </p>
                 )}
