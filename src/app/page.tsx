@@ -227,7 +227,7 @@ export default function DashboardPage() {
 
       {/* 대시보드 푸터 */}
       <footer className="max-w-6xl mx-auto border-t border-neutral-800 mt-16 pt-6 text-center text-xs text-neutral-500">
-        <p>© 2026 AAA TEAM by Selfish Club · Powered by Antigravity 2.0 Realtime Engine</p>
+        <p>© 2026 AAA TEAM by git2583 · Powered by Antigravity 2.0 Realtime Engine</p>
       </footer>
     </div>
   );
