@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard/index.html"
+    },
+    {
+      "source": "/dashboard/:path*",
+      "destination": "/dashboard/:path*"
+    }
+  ]
+}
