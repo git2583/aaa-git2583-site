@@ -1,0 +1,229 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="AI 스터디 아카이브 | AAA TEAM">
+	<main class="container">
+		<header class="hero-section">
+			<span class="tagline glass">Season 1 · AI Builder Study</span>
+			<h1 class="title">
+				Obsidian + Astro <br />
+				<span class="gradient-text">AAA TEAM Archive</span>
+			</h1>
+			<p class="description">
+				로컬 옵시디언의 지식을 Antigravity 2.0 보안 파이프라인을 거쳐 실시간으로 외부 정적 웹에 아카이빙하고 공유하는 빌더 팀의 표준 운영 시스템입니다.
+			</p>
+		</header>
+
+		<section class="grid-navigation">
+			<a href="/archive" class="nav-card glass" id="nav-archive">
+				<div class="card-icon">📚</div>
+				<h2>주차별 미션 아카이브</h2>
+				<p>멤버들이 매주 기한 내에 제출한 AI 연구 과제와 빌딩 기록을 주차별로 조회합니다.</p>
+				<span class="arrow">→</span>
+			</a>
+
+			<a href="/tools" class="nav-card glass" id="nav-tools">
+				<div class="card-icon">🛠️</div>
+				<h2>스킬 & 인사이트</h2>
+				<p>스터디 과정에서 습득한 AI 도구 활용법 및 핵심 엔지니어링 팁을 공유합니다.</p>
+				<span class="arrow">→</span>
+			</a>
+
+			<a href="/gallery" class="nav-card glass" id="nav-gallery">
+				<div class="card-icon">🎨</div>
+				<h2>결과물 갤러리</h2>
+				<p>스터디 기간 동안 실제로 구현 완료한 웹 서비스, 파이프라인 등 프로젝트를 선보입니다.</p>
+				<span class="arrow">→</span>
+			</a>
+
+			<a href="/curriculum" class="nav-card glass" id="nav-curriculum">
+				<div class="card-icon">📋</div>
+				<h2>스터디 커리큘럼</h2>
+				<p>시즌 1의 8주차 공식 학습 주제와 빌딩 목표 및 교육 과정을 확인합니다.</p>
+				<span class="arrow">→</span>
+			</a>
+
+			<a href="/retrospectives" class="nav-card glass" id="nav-retrospectives">
+				<div class="card-icon">📝</div>
+				<h2>프로젝트 회고록</h2>
+				<p>시즌 종료 후 멤버들이 작성한 KPT 기반의 심도 깊은 프로젝트 포스트모템을 읽습니다.</p>
+				<span class="arrow">→</span>
+			</a>
+
+			<a href="/team" class="nav-card glass" id="nav-team">
+				<div class="card-icon">👥</div>
+				<h2>빌더 팀 프로필</h2>
+				<p>시즌에 참여 중인 빌더들의 성향 분석 보고서와 개인별 성장 프로필을 제공합니다.</p>
+				<span class="arrow">→</span>
+			</a>
+		</section>
+
+		<section class="weekly-preview glass">
+			<div class="preview-header">
+				<span class="pulse-indicator"></span>
+				<h3>최신 AI 주간 리포트 프리뷰</h3>
+			</div>
+			<div class="preview-content">
+				<p class="preview-placeholder">
+					아직 동기화된 보고서가 존재하지 않습니다. Antigravity 2.0 에이전트의 <code>/publish</code> 명령어를 구동하여 첫 아카이브 배포를 시작하세요!
+				</p>
+			</div>
+		</section>
+	</main>
+</Layout>
+
+<style>
+	.container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 80px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 60px;
+	}
+
+	.hero-section {
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 20px;
+	}
+
+	.tagline {
+		font-size: 0.85rem;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		padding: 8px 16px;
+		border-radius: 100px;
+		color: var(--muted);
+	}
+
+	.title {
+		font-size: clamp(2.5rem, 6vw, 4rem);
+		line-height: 1.1;
+	}
+
+	.description {
+		max-width: 680px;
+		font-size: 1.15rem;
+		line-height: 1.6;
+		color: var(--muted);
+	}
+
+	.grid-navigation {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+		gap: 24px;
+	}
+
+	.nav-card {
+		padding: 32px;
+		border-radius: var(--radius);
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		position: relative;
+		transition: var(--transition);
+		cursor: pointer;
+	}
+
+	.nav-card:hover {
+		transform: translateY(-5px);
+		border-color: var(--primary);
+		box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.2);
+	}
+
+	.card-icon {
+		font-size: 2rem;
+	}
+
+	.nav-card h2 {
+		font-size: 1.4rem;
+		font-weight: 700;
+	}
+
+	.nav-card p {
+		font-size: 0.95rem;
+		line-height: 1.5;
+		color: var(--muted);
+	}
+
+	.arrow {
+		font-size: 1.2rem;
+		position: absolute;
+		bottom: 24px;
+		right: 32px;
+		opacity: 0.6;
+		transition: var(--transition);
+	}
+
+	.nav-card:hover .arrow {
+		transform: translateX(5px);
+		opacity: 1;
+		color: var(--primary);
+	}
+
+	.weekly-preview {
+		padding: 40px;
+		border-radius: var(--radius);
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.preview-header {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.pulse-indicator {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background-color: var(--warning);
+		position: relative;
+	}
+
+	.pulse-indicator::after {
+		content: "";
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		background-color: var(--warning);
+		animation: pulse 1.5s infinite ease-in-out;
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+			opacity: 1;
+		}
+		100% {
+			transform: scale(2.5);
+			opacity: 0;
+		}
+	}
+
+	.preview-content {
+		border-top: 1px solid var(--border);
+		padding-top: 20px;
+	}
+
+	.preview-placeholder {
+		font-size: 1rem;
+		color: var(--muted);
+		line-height: 1.5;
+	}
+
+	.preview-placeholder code {
+		background-color: var(--secondary);
+		padding: 2px 6px;
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+</style>
