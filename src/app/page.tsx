@@ -216,7 +216,7 @@ export default function DashboardPage() {
                   </div>
                   <span className="font-semibold text-neutral-300">{job.author}</span>
                 </div>
-                <span className="text-[10px]">
+                <span className="text-[10px]" suppressHydrationWarning>
                   {new Date(job.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
