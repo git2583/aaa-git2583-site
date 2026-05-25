@@ -164,8 +164,9 @@ const serverSupabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import
       const customUrl = localStorage.getItem(LOCAL_URL_KEY);
       const customKey = localStorage.getItem(LOCAL_ANON_KEY);
 
-      const activeUrl = customUrl || serverSupabaseUrl;
-      const activeKey = customKey || serverSupabaseAnonKey;
+      // 개행(\n) 및 백슬래시 n(\\n), 공백 제거 안전장치 적용
+      const activeUrl = (customUrl || serverSupabaseUrl).trim().replace(/\\n/g, '').replace(/\n/g, '');
+      const activeKey = (customKey || serverSupabaseAnonKey).trim().replace(/\\n/g, '').replace(/\n/g, '');
       const isCustomMode = !!(customUrl || customKey);
 
       // DOM 요소 바인딩
