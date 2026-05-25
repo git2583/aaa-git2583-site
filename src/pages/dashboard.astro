@@ -1,0 +1,444 @@
+---
+// frontend/src/pages/dashboard.astro
+import '../styles/globals.css';
+
+// Astro 빌드타임 환경 변수 획득
+const serverSupabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const serverSupabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AAA TEAM 실시간 대시보드 갤러리</title>
+    <!-- Pretendard 폰트 로드 -->
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
+    <!-- Lucide 아이콘 로드 (Vanilla JS용) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      /* 레이아웃 및 디버그 패널 스타일링 */
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow);
+      }
+      .badge-completed {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+      .badge-processing {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+      .badge-failed {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+      .badge-pending {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: #9ca3af;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+      }
+    </style>
+  </head>
+  <body class="bg-neutral-950 text-neutral-100 min-h-screen p-6 md:p-12 font-sans selection:bg-yellow-400 selection:text-neutral-900">
+    
+    <!-- 대시보드 헤더 -->
+    <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end border-b border-neutral-800 pb-6 mb-8 gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <!-- Activity 아이콘 대체 (Lucide에 의해 변환됨) -->
+          <i data-lucide="activity" class="text-yellow-400 animate-pulse w-6 h-6"></i>
+          <span class="text-[10px] uppercase tracking-widest text-neutral-400 font-bold bg-neutral-800 px-3 py-1 rounded-full border border-neutral-700">
+            Antigravity 2.0 Engine (Astro Single Core)
+          </span>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white">AAA TEAM 실시간 대시보드 갤러리</h1>
+        <p class="text-neutral-400 text-sm mt-1">사용자 작업물 비동기 파이프라인 실시간 상태 모니터링 시스템</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Supabase 연동 상태 표시기 -->
+        <div id="connection-status-badge" class="flex items-center gap-2 bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-2 text-xs">
+          <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+          <span id="status-text" class="font-semibold text-neutral-300">연결 대기 중...</span>
+        </div>
+        <!-- 디버그 설정 열기 버튼 -->
+        <button id="open-debug-btn" class="flex items-center justify-center p-2 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-neutral-500 text-neutral-300 transition-colors" title="Supabase 연결 디버그 설정">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 종합 상태판 -->
+    <section class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-neutral-800/40 border border-neutral-800/80 rounded-xl p-5 backdrop-blur">
+        <h3 class="text-xs text-neutral-400 font-bold uppercase tracking-wider mb-1">총 파이프라인 태스크</h3>
+        <p id="stats-total" class="text-2xl font-black text-white">0 <span class="text-xs font-normal text-neutral-400">개</span></p>
+      </div>
+      <div class="bg-neutral-800/40 border border-neutral-800/80 rounded-xl p-5 backdrop-blur">
+        <h3 class="text-xs text-neutral-400 font-bold uppercase tracking-wider mb-1">정상 완수</h3>
+        <p id="stats-completed" class="text-2xl font-black text-green-400">0 <span class="text-xs font-normal text-neutral-400">개</span></p>
+      </div>
+      <div class="bg-neutral-800/40 border border-neutral-800/80 rounded-xl p-5 backdrop-blur">
+        <h3 class="text-xs text-neutral-400 font-bold uppercase tracking-wider mb-1">처리 및 대기 중</h3>
+        <p id="stats-pending" class="text-2xl font-black text-yellow-400">0 <span class="text-xs font-normal text-neutral-400">개</span></p>
+      </div>
+      <div class="bg-neutral-800/40 border border-neutral-800/80 rounded-xl p-5 backdrop-blur">
+        <h3 class="text-xs text-neutral-400 font-bold uppercase tracking-wider mb-1">장애 실패</h3>
+        <p id="stats-failed" class="text-2xl font-black text-red-400">0 <span class="text-xs font-normal text-neutral-400">개</span></p>
+      </div>
+    </section>
+
+    <!-- 메인 갤러리 영역 -->
+    <main class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layout-grid" class="text-neutral-400 w-5 h-5"></i>
+          <h2 class="text-lg font-bold text-neutral-200">실시간 유저 작업물 갤러리</h2>
+        </div>
+        <div id="loading-spinner" class="spinner" style="display: none;"></div>
+      </div>
+
+      <!-- 카드 그리드 컨테이너 -->
+      <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 로딩 스켈레톤 (자바스크립트 실행 전까지 서빙됨) -->
+        <div class="skeleton min-h-[180px] p-6 border border-neutral-800/50 rounded-xl"></div>
+        <div class="skeleton min-h-[180px] p-6 border border-neutral-800/50 rounded-xl"></div>
+        <div class="skeleton min-h-[180px] p-6 border border-neutral-800/50 rounded-xl"></div>
+      </div>
+    </main>
+
+    <!-- 대시보드 푸터 -->
+    <footer class="max-w-6xl mx-auto border-t border-neutral-800 mt-16 pt-6 text-center text-xs text-neutral-500">
+      <p>© 2026 AAA TEAM by git2583 · Powered by Antigravity 2.0 Astro Single-Engine</p>
+    </footer>
+
+    <!-- Supabase 연결 디버그 모달 (환경 변수 꼬임 대처 안전장치) -->
+    <div id="debug-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+      <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md rounded-xl p-6 shadow-2xl relative">
+        <button id="close-debug-btn" class="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i data-lucide="terminal" class="text-yellow-400"></i> Supabase 연결 디버그 설정
+        </h3>
+        <p class="text-xs text-neutral-400 mb-4">
+          서버 빌드 시점의 환경 변수와 무관하게, 브라우저 단에서 강제로 적용할 Supabase 자격 증명을 설정합니다. 환경 변수 캐싱 오류 발생 시 유용합니다.
+        </p>
+        
+        <div class="flex flex-col gap-4 text-sm">
+          <div>
+            <label class="block text-xs font-semibold text-neutral-300 mb-1">Supabase Endpoint URL</label>
+            <input type="text" id="debug-url-input" class="w-full bg-neutral-950 border border-neutral-800 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400 font-mono text-xs" placeholder="https://xxxx.supabase.co" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-300 mb-1">Supabase Anon Key</label>
+            <textarea id="debug-key-input" rows="4" class="w-full bg-neutral-950 border border-neutral-800 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400 font-mono text-xs resize-none" placeholder="eyJhbGciOi..."></textarea>
+          </div>
+          
+          <div class="flex justify-between items-center mt-2">
+            <button id="reset-debug-btn" class="text-xs text-red-400 hover:underline">수동 설정 초기화</button>
+            <div class="flex gap-2">
+              <button id="cancel-debug-btn" class="bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded text-xs text-neutral-300 transition-colors">취소</button>
+              <button id="save-debug-btn" class="bg-yellow-400 hover:bg-yellow-500 text-neutral-900 font-bold px-4 py-2 rounded text-xs transition-colors">적용 후 재로딩</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 클라이언트 사이드 스크립트 실행 (Supabase 연동 핵심 로직) -->
+    <script define:vars={{ serverSupabaseUrl, serverSupabaseAnonKey }}>
+      // LocalStorage 키 명세
+      const LOCAL_URL_KEY = 'supabase_custom_url';
+      const LOCAL_ANON_KEY = 'supabase_custom_key';
+
+      // 1. 활성 Supabase 설정 결정 (수동 설정 우선, 차선책으로 서버 환경 변수)
+      const customUrl = localStorage.getItem(LOCAL_URL_KEY);
+      const customKey = localStorage.getItem(LOCAL_ANON_KEY);
+
+      const activeUrl = customUrl || serverSupabaseUrl;
+      const activeKey = customKey || serverSupabaseAnonKey;
+      const isCustomMode = !!(customUrl || customKey);
+
+      // DOM 요소 바인딩
+      const statusDot = document.getElementById('status-dot');
+      const statusText = document.getElementById('status-text');
+      const jobsGrid = document.getElementById('jobs-grid');
+      const debugModal = document.getElementById('debug-modal');
+      const openDebugBtn = document.getElementById('open-debug-btn');
+      const closeDebugBtn = document.getElementById('close-debug-btn');
+      const cancelDebugBtn = document.getElementById('cancel-debug-btn');
+      const saveDebugBtn = document.getElementById('save-debug-btn');
+      const resetDebugBtn = document.getElementById('reset-debug-btn');
+      const debugUrlInput = document.getElementById('debug-url-input');
+      const debugKeyInput = document.getElementById('debug-key-input');
+      const loadingSpinner = document.getElementById('loading-spinner');
+
+      // 종합 통계 DOM
+      const statsTotal = document.getElementById('stats-total');
+      const statsCompleted = document.getElementById('stats-completed');
+      const statsPending = document.getElementById('stats-pending');
+      const statsFailed = document.getElementById('stats-failed');
+
+      // 로컬 상태
+      let jobs = [];
+      let supabaseClient = null;
+
+      // 2. 디버그 모달 기능 활성화
+      openDebugBtn.addEventListener('click', () => {
+        debugUrlInput.value = localStorage.getItem(LOCAL_URL_KEY) || serverSupabaseUrl;
+        debugKeyInput.value = localStorage.getItem(LOCAL_ANON_KEY) || serverSupabaseAnonKey;
+        debugModal.classList.remove('hidden');
+      });
+
+      const hideModal = () => debugModal.classList.add('hidden');
+      closeDebugBtn.addEventListener('click', hideModal);
+      cancelDebugBtn.addEventListener('click', hideModal);
+
+      // 설정 수동 적용
+      saveDebugBtn.addEventListener('click', () => {
+        const u = debugUrlInput.value.trim();
+        const k = debugKeyInput.value.trim();
+        if (u) localStorage.setItem(LOCAL_URL_KEY, u);
+        else localStorage.removeItem(LOCAL_URL_KEY);
+
+        if (k) localStorage.setItem(LOCAL_ANON_KEY, k);
+        else localStorage.removeItem(LOCAL_ANON_KEY);
+
+        hideModal();
+        window.location.reload();
+      });
+
+      // 설정 초기화
+      resetDebugBtn.addEventListener('click', () => {
+        localStorage.removeItem(LOCAL_URL_KEY);
+        localStorage.removeItem(LOCAL_ANON_KEY);
+        hideModal();
+        window.location.reload();
+      });
+
+      // 3. 모킹 데이터 명세
+      const MOCK_JOBS = [
+        {
+          id: 'job-001',
+          author: '빌더A',
+          status: 'completed',
+          title: 'Astro Monorepo 뼈대 구축 및 정적 리서치',
+          created_at: new Date().toISOString(),
+          failed_reason: null,
+          week: 1,
+        },
+        {
+          id: 'job-002',
+          author: '디자이너B',
+          status: 'pending',
+          title: 'Tailwind CSS HSL Hues 테마 적용 및 가시성 확보',
+          created_at: new Date().toISOString(),
+          failed_reason: null,
+          week: 1,
+        },
+        {
+          id: 'job-003',
+          author: '옵스C',
+          status: 'failed',
+          title: 'GitHub Actions 자동 배포 트리거 구축 실패 내역',
+          created_at: new Date().toISOString(),
+          failed_reason: 'GitHub API Rate Limit Exceeded (403 Forbidden)',
+          week: 1,
+        }
+      ];
+
+      // 4. 상태 뱃지 렌더러
+      const getStatusBadgeHtml = (status) => {
+        switch (status) {
+          case 'completed':
+            return `<span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded badge-completed">
+                      <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> 완료
+                    </span>`;
+          case 'pending':
+          case 'processing':
+            return `<span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded badge-processing animate-pulse">
+                      <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i> 처리 중
+                    </span>`;
+          case 'failed':
+            return `<span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded badge-failed">
+                      <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> 실패
+                    </span>`;
+          default:
+            return `<span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded badge-pending">
+                      <i data-lucide="clock" class="w-3.5 h-3.5"></i> 대기
+                    </span>`;
+        }
+      };
+
+      // 5. 종합 통계 패널 갱신
+      const updateStats = () => {
+        statsTotal.innerHTML = `${jobs.length} <span class="text-xs font-normal text-neutral-400">개</span>`;
+        
+        const comp = jobs.filter(j => j.status === 'completed').length;
+        statsCompleted.innerHTML = `${comp} <span class="text-xs font-normal text-neutral-400">개</span>`;
+        
+        const pend = jobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+        statsPending.innerHTML = `${pend} <span class="text-xs font-normal text-neutral-400">개</span>`;
+        
+        const fail = jobs.filter(j => j.status === 'failed').length;
+        statsFailed.innerHTML = `${fail} <span class="text-xs font-normal text-neutral-400">개</span>`;
+      };
+
+      // 6. UI 렌더링 함수
+      const renderJobs = () => {
+        if (jobs.length === 0) {
+          jobsGrid.innerHTML = `
+            <div class="col-span-full py-16 text-center text-neutral-500 border border-dashed border-neutral-800 rounded-xl">
+              <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-neutral-600"></i>
+              <p class="text-sm">현재 파이프라인에 등록된 작업물이 없습니다.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          updateStats();
+          return;
+        }
+
+        jobsGrid.innerHTML = jobs.map(job => {
+          const formattedTime = new Date(job.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+          const failedBlock = job.failed_reason 
+            ? `<p class="text-xs text-red-400 mt-2 bg-red-950/30 border border-red-900/20 rounded p-2.5 font-mono break-words">${job.failed_reason}</p>`
+            : '';
+          
+          return `
+            <article class="group bg-neutral-900/30 border border-neutral-800/80 hover:border-neutral-700 transition-all duration-300 rounded-xl overflow-hidden p-6 flex flex-col justify-between min-h-[190px] hover:shadow-lg hover:shadow-black/30">
+              <div>
+                <div class="flex justify-between items-start mb-3">
+                  <span class="text-[10px] font-black tracking-widest text-neutral-500 uppercase bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">
+                    Week ${job.week || 1}
+                  </span>
+                  ${getStatusBadgeHtml(job.status)}
+                </div>
+                
+                <h3 class="text-[15px] font-bold text-white group-hover:text-yellow-400 transition-colors line-clamp-2 leading-snug">
+                  ${job.title}
+                </h3>
+                
+                ${failedBlock}
+              </div>
+
+              <div class="flex items-center justify-between mt-6 pt-4 border-t border-neutral-800/80 text-xs text-neutral-400">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center font-bold text-[10px] text-yellow-400 border border-neutral-700">
+                    ${job.author ? job.author.substring(0, 1) : '?'}
+                  </div>
+                  <span class="font-semibold text-neutral-300">${job.author || '알 수 없음'}</span>
+                </div>
+                <span class="text-[10px] text-neutral-500">${formattedTime}</span>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        // 렌더링된 요소들에 Lucide 아이콘 적용
+        lucide.createIcons();
+        updateStats();
+      };
+
+      // 7. Supabase 연결 초기화 및 실행
+      const initSupabase = async () => {
+        if (!activeUrl || !activeKey) {
+          console.warn('[Warning] Supabase URL 혹은 Anon Key가 정의되지 않았습니다. 모킹 모드로 자동 진입합니다.');
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500';
+          statusText.innerText = '환경 변수 설정이 누락되었습니다 (모킹 작동)';
+          jobs = MOCK_JOBS;
+          renderJobs();
+          return;
+        }
+
+        try {
+          loadingSpinner.style.display = 'block';
+          
+          // CDN을 통해 주입된 Supabase 라이브러리 사용
+          if (typeof window.supabase === 'undefined') {
+            // 브라우저 윈도우 객체에 supabase가 없는 경우, 동적 스크립트 로드 수행
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+
+          supabaseClient = window.supabase.createClient(activeUrl, activeKey);
+
+          // 초기 데이터 Fetch
+          const { data, error } = await supabaseClient
+            .from('pipeline_jobs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          jobs = data || [];
+          renderJobs();
+
+          // 연결 성공 상태 업데이트
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping';
+          statusText.innerText = isCustomMode ? '디버그 수동 설정 작동 중' : 'Supabase 실시간 연동 중';
+          statusText.classList.add('text-emerald-400');
+
+          // Realtime 구독 시작
+          const channel = supabaseClient
+            .channel('realtime-pipeline-jobs')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'pipeline_jobs',
+              },
+              (payload) => {
+                console.log('[실시간 업데이트 감지]:', payload);
+                const { eventType, new: newRecord, old: oldRecord } = payload;
+
+                if (eventType === 'INSERT') {
+                  jobs = [newRecord, ...jobs];
+                } else if (eventType === 'UPDATE') {
+                  jobs = jobs.map((job) => (job.id === newRecord.id ? newRecord : job));
+                } else if (eventType === 'DELETE') {
+                  jobs = jobs.filter((job) => job.id !== oldRecord.id);
+                }
+                renderJobs();
+              }
+            )
+            .subscribe();
+
+        } catch (err) {
+          console.error('[오류] Supabase 실시간 연동 초기화 실패:', err);
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+          statusText.innerText = '연동 실패 - 자격 증명을 점검하세요';
+          statusText.classList.add('text-red-400');
+          
+          // 오류 발생 시 모킹 데이터 로드하여 레이아웃이 붕괴하지 않도록 자가 복구 지원
+          jobs = MOCK_JOBS;
+          renderJobs();
+        } finally {
+          loadingSpinner.style.display = 'none';
+        }
+      };
+
+      // 초기 기동
+      document.addEventListener('DOMContentLoaded', () => {
+        // Lucide 초기화
+        lucide.createIcons();
+        // Supabase 초기화
+        initSupabase();
+      });
+    </script>
+  </body>
+</html>
